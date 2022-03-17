@@ -1,20 +1,23 @@
 package helpers
 
 import (
-	"encoding/json"
-	"log"
+	"net/http"
 )
 
-func AnswerQuestion(speech string) string {
-	var Answer TextJSON
+func AnswerQuestion(speech string) ([]byte, bool, int) {
+	q, b, e := SpeechToText(speech)
 
-	q := SpeechToText(speech)
-	a := GetAnswer(string(q))
-	err := json.Unmarshal([]byte(a), &Answer)
-	if err != nil {
-		log.Fatal(err)
+	if b != false {
+		return q, b, e
 	}
-	o := TextToSpeech(Answer.Text)
 
-	return string(o)
+	a, b, _ := GetAnswer(string(q))
+
+	o, b, _ := TextToSpeech(string(a))
+
+	if b != false {
+		return []byte("An error occurred whilst processing your request."), true, http.StatusInternalServerError
+	}
+
+	return o, false, http.StatusOK
 }

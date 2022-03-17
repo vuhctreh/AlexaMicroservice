@@ -22,7 +22,7 @@ type Response struct {
 	Duration          uint   `json:"Duration"`
 }
 
-func SpeechToText(speech string) []byte {
+func SpeechToText(speech string) ([]byte, bool, int) {
 	var response Response
 	err := godotenv.Load(".env")
 
@@ -32,8 +32,12 @@ func SpeechToText(speech string) []byte {
 
 	body := parseSpeech(speech)
 
+	if string(body) == "" {
+		return []byte("Invalid JSON input."), true, http.StatusBadRequest
+	}
+
 	c := &http.Client{}
-	req, err := http.NewRequest("POST", sttURI, bytes.NewReader([]byte(body)))
+	req, err := http.NewRequest("POST", sttURI, bytes.NewReader(body))
 
 	if err != nil {
 		log.Fatal(err)
@@ -62,13 +66,12 @@ func SpeechToText(speech string) []byte {
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			return []byte(JSONify(response.DisplayText))
+			return JSONify(response.DisplayText), false, http.StatusOK
 		}
 	} else {
 		log.Fatal(r.StatusCode)
 	}
-	return nil
+	return []byte("An unknown error occurred."), true, http.StatusTeapot
 }
 
 func parseSpeech(s string) []byte {
@@ -76,7 +79,8 @@ func parseSpeech(s string) []byte {
 	err := json.Unmarshal([]byte(s), &p)
 
 	if err != nil {
-		log.Fatal(err)
+		p.Text = ""
+		return []byte(p.Text)
 	}
 
 	o, _ := base64.StdEncoding.DecodeString(p.Text)

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	URL        = "https://api.wolframalpha.com/v1/result?appid=2YKEVX-9RPE6GE88R&i"
+	URL        = "https://api.wolframalpha.com/v1/result?appid="
 	InputParam = "&i="
 )
 
@@ -24,25 +24,26 @@ func ParseInput(i string) TextJSON {
 	err := json.Unmarshal([]byte(i), &p)
 
 	if err != nil {
-		log.Fatal(err)
+		p.Text = ""
+		return p
 	}
 
 	return p
 }
 
-func JSONify(i string) string {
+func JSONify(i string) []byte {
 	o := TextJSON{i}
 
-	byteArray, err := json.Marshal(o)
+	ba, err := json.Marshal(o)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return string(byteArray)
+	return ba
 }
 
-func GetAnswer(i string) string {
+func GetAnswer(i string) ([]byte, bool, int) {
 	err := godotenv.Load(".env")
 
 	if err != nil {
@@ -51,17 +52,23 @@ func GetAnswer(i string) string {
 
 	p := ParseInput(i).Text
 
+	if p == "" {
+		return []byte("Invalid JSON input."), true, http.StatusBadRequest
+	}
+
 	q := strings.Replace(p, " ", "+", -1)
 
 	resp, err := http.Get(URL + os.Getenv("WOLFRAM_API") + InputParam + q)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return []byte("Short Answers API could not be reached."), true, http.StatusBadGateway
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return []byte("Could not parse response from Wolfram Alpha."), true, http.StatusInternalServerError
 	}
 
-	return JSONify(string(body))
+	return JSONify(string(body)), false, http.StatusOK
 }

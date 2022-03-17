@@ -19,7 +19,7 @@ type speechJSON struct {
 	Text string `json:"speech"`
 }
 
-func TextToSpeech(text string) []byte {
+func TextToSpeech(text string) ([]byte, bool, int) {
 	err := godotenv.Load(".env")
 
 	if err != nil {
@@ -27,6 +27,10 @@ func TextToSpeech(text string) []byte {
 	}
 
 	body := pb(text)
+
+	if body == "" {
+		return []byte("Invalid JSON input."), true, http.StatusBadRequest
+	}
 
 	c := &http.Client{}
 	req, err := http.NewRequest("POST", ttsURI, bytes.NewReader([]byte(body)))
@@ -52,17 +56,24 @@ func TextToSpeech(text string) []byte {
 		if err != nil {
 			log.Fatal(err)
 		} else {
-			return toJSON(body)
+			return toJSON(body), false, http.StatusOK
 		}
 	} else {
-		log.Fatal(r.StatusCode)
+		return []byte("Error retrieving converted text."), true, http.StatusInternalServerError
 	}
-	return nil
+	return []byte("An unknown error occurred."), true, http.StatusTeapot
 }
 
 func pb(t string) string {
+	var q TextJSON
+	err := json.Unmarshal([]byte(t), &q)
+
+	if err != nil {
+		return q.Text
+	}
+
 	return "<speak version='1.0' xml:lang='en-US'><voice xml:lang='en-US' " +
-		"xml:gender='Male' name='en-US-ChristopherNeural'>" + t + "</voice></speak>"
+		"xml:gender='Male' name='en-US-ChristopherNeural'>" + q.Text + "</voice></speak>"
 }
 
 func toJSON(b []byte) []byte {
