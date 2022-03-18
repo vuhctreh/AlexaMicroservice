@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"github.com/joho/godotenv"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 )
@@ -27,7 +26,7 @@ func SpeechToText(speech string) ([]byte, bool, int) {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatal(err)
+		return []byte("Error loading required files."), true, http.StatusInternalServerError
 	}
 
 	body := parseSpeech(speech)
@@ -40,7 +39,7 @@ func SpeechToText(speech string) ([]byte, bool, int) {
 	req, err := http.NewRequest("POST", sttURI, bytes.NewReader(body))
 
 	if err != nil {
-		log.Fatal(err)
+		return []byte("Error preparing request."), true, http.StatusInternalServerError
 	}
 
 	req.Header.Set("Content-Type", "audio/wav; codecs=audio/pcm; samplerate=16000")
@@ -52,7 +51,7 @@ func SpeechToText(speech string) ([]byte, bool, int) {
 
 	r, err := c.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return []byte("Error contacting external API."), true, http.StatusInternalServerError
 	}
 
 	defer r.Body.Close()
@@ -60,18 +59,17 @@ func SpeechToText(speech string) ([]byte, bool, int) {
 	if r.StatusCode == http.StatusOK {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Fatal(err)
+			return []byte("Error parsing response from API."), true, http.StatusInternalServerError
 		} else {
 			err := json.Unmarshal(body, &response)
 			if err != nil {
-				log.Fatal(err)
+				return []byte("Could not parse API response as JSON."), true, http.StatusInternalServerError
 			}
 			return JSONify(response.DisplayText), false, http.StatusOK
 		}
 	} else {
-		log.Fatal(r.StatusCode)
+		return []byte("Invalid external API response."), true, http.StatusInternalServerError
 	}
-	return []byte("An unknown error occurred."), true, http.StatusTeapot
 }
 
 func parseSpeech(s string) []byte {

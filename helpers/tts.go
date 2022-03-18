@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"github.com/joho/godotenv"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 )
@@ -23,7 +22,7 @@ func TextToSpeech(text string) ([]byte, bool, int) {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatal(err)
+		return []byte("Error loading required files."), true, http.StatusInternalServerError
 	}
 
 	body := pb(text)
@@ -34,8 +33,9 @@ func TextToSpeech(text string) ([]byte, bool, int) {
 
 	c := &http.Client{}
 	req, err := http.NewRequest("POST", ttsURI, bytes.NewReader([]byte(body)))
+
 	if err != nil {
-		log.Fatal(err)
+		return []byte("Error preparing request."), true, http.StatusInternalServerError
 	}
 
 	req.Header.Set("X-Microsoft-OutputFormat", "riff-24khz-16bit-mono-pcm")
@@ -46,7 +46,7 @@ func TextToSpeech(text string) ([]byte, bool, int) {
 
 	r, err := c.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return []byte("Error contacting external API."), true, http.StatusInternalServerError
 	}
 
 	defer r.Body.Close()
@@ -54,14 +54,13 @@ func TextToSpeech(text string) ([]byte, bool, int) {
 	if r.StatusCode == http.StatusOK {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Fatal(err)
+			return []byte("Error parsing API response."), true, http.StatusInternalServerError
 		} else {
 			return toJSON(body), false, http.StatusOK
 		}
 	} else {
 		return []byte("Error retrieving converted text."), true, http.StatusInternalServerError
 	}
-	return []byte("An unknown error occurred."), true, http.StatusTeapot
 }
 
 func pb(t string) string {

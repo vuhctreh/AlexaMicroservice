@@ -37,7 +37,7 @@ func JSONify(i string) []byte {
 	ba, err := json.Marshal(o)
 
 	if err != nil {
-		log.Fatal(err)
+		return []byte("")
 	}
 
 	return ba
@@ -47,7 +47,7 @@ func GetAnswer(i string) ([]byte, bool, int) {
 	err := godotenv.Load(".env")
 
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		return []byte("Error loading required files."), true, http.StatusInternalServerError
 	}
 
 	p := ParseInput(i).Text
@@ -68,6 +68,12 @@ func GetAnswer(i string) ([]byte, bool, int) {
 	if err != nil {
 		log.Print(err)
 		return []byte("Could not parse response from Wolfram Alpha."), true, http.StatusInternalServerError
+	}
+
+	o := JSONify(string(body))
+
+	if string(o) == "" {
+		return []byte("Error converting JSON response."), true, http.StatusInternalServerError
 	}
 
 	return JSONify(string(body)), false, http.StatusOK

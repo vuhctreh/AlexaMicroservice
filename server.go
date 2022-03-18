@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"gocw/helpers"
 	"io/ioutil"
 	"net/http"
@@ -13,9 +14,60 @@ var (
 	i int
 )
 
+func startServer() {
+	finish := make(chan bool)
+
+	var err error
+
+	routerAlpha := mux.NewRouter().StrictSlash(true)
+	routerAlpha.HandleFunc("/alpha", aioHandler(0))
+
+	routerSTT := mux.NewRouter().StrictSlash(true)
+	routerSTT.HandleFunc("/stt", aioHandler(2))
+
+	routerTTS := mux.NewRouter().StrictSlash(true)
+	routerTTS.HandleFunc("/tts", aioHandler(1))
+
+	routerAlexa := mux.NewRouter().StrictSlash(true)
+	routerAlexa.HandleFunc("/alexa", aioHandler(3))
+
+	go func() {
+		err = http.ListenAndServe(":3000", routerAlexa)
+	}()
+
+	go func() {
+		http.ListenAndServe(":3001", routerAlpha)
+	}()
+
+	go func() {
+		http.ListenAndServe(":3002", routerSTT)
+	}()
+
+	go func() {
+		http.ListenAndServe(":3003", routerTTS)
+	}()
+
+	if err != nil {
+		fmt.Println("An error occurred loading the microservices. Please retry.")
+		return
+	}
+
+	fmt.Println("Microservices running. Listening to ports 3000 -> 3003.")
+
+	<-finish
+}
+
 func aioHandler(sv int) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		q, _ := ioutil.ReadAll(r.Body)
+		q, err := ioutil.ReadAll(r.Body)
+
+		if err != nil {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "Internal server error processing your request.")
+			return
+		}
+
 		sq := string(q)
 		switch sv {
 		case 0:
