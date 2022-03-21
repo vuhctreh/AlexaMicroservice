@@ -1,3 +1,8 @@
+/**
+The helpers package contains alexa.go, alpha.go, stt.go and tts.go.
+
+stt.go uses the azure speech API to convert speech to text.
+**/
 package helpers
 
 import (
@@ -11,19 +16,32 @@ import (
 )
 
 const (
-	sttURI = "https://uksouth.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-GB"
+	sttURI = "https://uksouth.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-GB" // Azure speech API endpoint
 )
 
 type Response struct {
-	RecognitionStatus string `json:"RecognitionStatus"`
-	DisplayText       string `json:"DisplayText"`
-	Offset            uint   `json:"Offset"`
-	Duration          uint   `json:"Duration"`
+	RecognitionStatus string `json:"RecognitionStatus"` // RecognitionStatus field from API response.
+	DisplayText       string `json:"DisplayText"`       // DisplayText field from API response.
+	Offset            uint   `json:"Offset"`            // Offset field from API response.
+	Duration          uint   `json:"Duration"`          // Duration field from API response.
 }
 
+/**
+Function to convert speech to text using Azure speech API.
+
+Input:
+speech string : speech to be converted. Input is in JSON format and speech field is encoded in base64.
+
+Returns:
+[]byte : byte array of converted text or error message.
+bool   : True if error.
+int    : http sstatus code.
+
+The converted speech is returned in JSON format with a field "text".
+**/
 func SpeechToText(speech string) ([]byte, bool, int) {
-	var response Response
-	err := godotenv.Load(".env")
+	var response Response        // Struct for Azure response.
+	err := godotenv.Load(".env") // load environment variables from .env file.
 
 	if err != nil {
 		return []byte("Error loading required files."), true, http.StatusInternalServerError

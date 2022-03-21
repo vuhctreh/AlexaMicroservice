@@ -19,7 +19,7 @@ type speechJSON struct {
 }
 
 func TextToSpeech(text string) ([]byte, bool, int) {
-	err := godotenv.Load(".env")
+	err := godotenv.Load(".env") // load environment variables from .env file.
 
 	if err != nil {
 		return []byte("Error loading required files."), true, http.StatusInternalServerError

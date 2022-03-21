@@ -1,3 +1,8 @@
+/**
+The helpers package contains alexa.go, alpha.go, stt.go and tts.go.
+
+**/
+
 package helpers
 
 import (
