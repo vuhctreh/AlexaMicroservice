@@ -3,6 +3,7 @@ The helpers package contains alexa.go, alpha.go, stt.go and tts.go.
 
 tts.go uses the azure speech API to convert text to speech.
 **/
+
 package helpers
 
 import (
@@ -32,7 +33,7 @@ text string : text to be converted. Input is in JSON format.
 Returns:
 []byte : byte array of converted speech or error message.
 bool   : True if error.
-int    : http sstatus code.
+int    : http status code.
 
 The converted speech is returned as a string of a base64 wav. The Azure response is an unencoded wav file.
 **/
