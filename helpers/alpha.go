@@ -89,7 +89,7 @@ and marked as internal server errors.
 func GetAnswer(i string) ([]byte, bool, int) {
 	err := godotenv.Load(".env") // load environment variables from .env file.
 
-	// returns internal server if .env cannot be opened.
+	// returns internal server if .env cannot be opened/read.
 	if err != nil {
 		return []byte("Error loading required files."), true, http.StatusInternalServerError
 	}
