@@ -33,24 +33,23 @@ func startServer() {
 
 	go func() {
 		err = http.ListenAndServe(":3000", routerAlexa)
+		checkError(err)
 	}()
 
 	go func() {
-		http.ListenAndServe(":3001", routerAlpha)
+		err = http.ListenAndServe(":3001", routerAlpha)
+		checkError(err)
 	}()
 
 	go func() {
-		http.ListenAndServe(":3002", routerSTT)
+		err = http.ListenAndServe(":3002", routerSTT)
+		checkError(err)
 	}()
 
 	go func() {
-		http.ListenAndServe(":3003", routerTTS)
+		err = http.ListenAndServe(":3003", routerTTS)
+		checkError(err)
 	}()
-
-	if err != nil {
-		fmt.Println("An error occurred loading the microservices. Please retry.")
-		return
-	}
 
 	fmt.Println("Microservices running. Listening to ports 3000 -> 3003.")
 
@@ -87,5 +86,11 @@ func aioHandler(sv int) func(http.ResponseWriter, *http.Request) {
 		}
 		w.WriteHeader(i)
 		fmt.Fprintf(w, string(s))
+	}
+}
+
+func checkError(e error) {
+	if e != nil {
+		fmt.Println("An error occurred loading the microservices. Please retry.")
 	}
 }

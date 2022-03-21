@@ -25,7 +25,6 @@ func ParseInput(i string) TextJSON {
 
 	if err != nil {
 		p.Text = ""
-		return p
 	}
 
 	return p
