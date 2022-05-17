@@ -44,4 +44,9 @@ WOLFRAM_API=
 AZURE_KEY=
 --------------------------------
 
+I understand that this may not be considered a
+microservice per say, however, I have made the
+decision of compiling a single multi-threaded
+router for ease of demonstration.
+
 Thank you!
